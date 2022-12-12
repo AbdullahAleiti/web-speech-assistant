@@ -1,0 +1,40 @@
+#abdullahaleiti_smart-voice-assistant {
+    background-color: #00717f;
+    color: #ffc526;
+    position: fixed;
+    top: 30px;
+    left: 30px;
+    z-index: 9999999;
+}
+
+#abdullahaleiti_smart-voice-assistant>div {
+    padding: 1em;
+    display: inline-block;
+}
+
+.btn_smart-voice-assistant:hover {
+    background-color: #00444c;
+    cursor: pointer;
+}
+
+#abdullahaleiti_smart-voice-assistant>div>svg {
+    position: relative;
+    top: 3px;
+}
+
+#handle_smart-voice-assistant {
+    background-color: wheat;
+    width: 10px;
+    height: 100%;
+    padding: 0 !important;
+    position: absolute;
+}
+
+.prevent-select {
+    -webkit-user-select: none;
+    /* Safari */
+    -ms-user-select: none;
+    /* IE 10 and IE 11 */
+    user-select: none;
+    /* Standard syntax */
+}

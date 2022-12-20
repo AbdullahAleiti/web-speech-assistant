@@ -3,7 +3,7 @@ export function locateByText(text: string): Element | null {
     // return the node as soon as it's found
     let wantedNode: Element | null = null;
     for (let node of walkPreOrder(document.body)) {
-        if (node.textContent?.toLowerCase()?.split(/[,*."\s]/)?.includes(text) && node.tagName !== 'BODY' && node.tagName !== 'SCRIPT') {
+        if (node.textContent?.toLowerCase()?.split(/[,*./"\s]/)?.includes(text) && node.tagName !== 'BODY' && node.tagName !== 'SCRIPT') {
             wantedNode = node
         }
     }

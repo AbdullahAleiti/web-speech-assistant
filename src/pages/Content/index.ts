@@ -62,7 +62,6 @@ recognition.onresult = function (event: any) {
     }
     else if (c.Input.includes(lastResult)) {
         mod = Mods.Input
-        console.log("inputting...");
     }
     else if (c.Search.includes(lastResult)) {
         mod = Mods.Search
@@ -230,30 +229,33 @@ function updateLanguage(lang: string) {
     btn.updateLanguage(recognition.lang === "tr_TR" ? "tr" : "en")
 }
 
+function initApp(){
+    app = App.On
+    initHtmlInputs()
+    console.log(LinkedListArray);
+    recognition.start();
+    recording = true
+    btn = hoveringButton(recognition)
+    btn.langClicked$.subscribe(
+        () => {
+            language = recognition.lang === "tr_TR" ? "en_US" : "tr_TR"
+            updateLanguage(language)
+        }
+    )
+    btn.retryClicked$.subscribe(
+        () => {
+            selectedNode.focus()
+            emptyNodeText(selectedNode)
+            mod = Mods.Input
+            btn.updateButton(Mods.Input, "...")
+        }
+    )
+    btn.updateButton(Mods.Command, "Komut bekleniyor..")
+}
+
 function toggleApp() {
     if (app === App.Uninitialized) {
-        app = App.On
-        addScript("https://code.iconify.design/iconify-icon/1.0.2/iconify-icon.min.js")
-        initHtmlInputs()
-        console.log(LinkedListArray);
-        recognition.start();
-        recording = true
-        btn = hoveringButton(recognition)
-        btn.langClicked$.subscribe(
-            () => {
-                language = recognition.lang === "tr_TR" ? "en_US" : "tr_TR"
-                updateLanguage(language)
-            }
-        )
-        btn.retryClicked$.subscribe(
-            () => {
-                selectedNode.focus()
-                emptyNodeText(selectedNode)
-                mod = Mods.Input
-                btn.updateButton(Mods.Input, "inputting...")
-            }
-        )
-        btn.updateButton(Mods.Command, "Komut dinleniyor..")
+        initApp()
     }
     else if (app === App.On) {
         app = App.Off
@@ -276,3 +278,5 @@ function toggleApp() {
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     if (request.command === "iconClick") toggleApp()
 });
+
+addScript("https://code.iconify.design/iconify-icon/1.0.2/iconify-icon.min.js")

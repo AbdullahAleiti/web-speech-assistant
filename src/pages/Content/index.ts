@@ -1,102 +1,27 @@
 import Node from "./modules/Node"
 import LinkedList from "./modules/LinkedList"
-import { hoveringButton } from "./hoveringButton";
+import { hoveringButton } from "./modules/hoveringButton";
 import { fromEvent } from "rxjs";
-import { App, commands, getOffsetRect, Direction, Mods } from "./constants";
-import { locateByText, addScript } from "./utils";
+import { App, commands, Direction, Mods } from "./constants";
+import { locateByText, addScript ,getOffsetRect} from "./utils";
+import BrowserRecognition from "./modules/BrowserRecognition";
+import { RecognitionHandler } from "./modules/RecognitionHandler";
+import AzureRecognition from "./modules/AzureRecognition";
 
-const maxOffset = 20
-let language = "tr_TR"
-let LinkedListArray: LinkedList<Element>[] = []
-const selectors = ["input", "textarea", "button"]
-let selectedNode: Node<Element>
-let btn: any
-let app = App.Uninitialized
-let recording = false
+let language = "tr_TR" // recognition parametere 
+const maxOffset = 20 //program config
+let LinkedListArray: LinkedList<Element>[] = [] //program
+const selectors = ["input", "textarea", "button"] //program
+let btn: any //program
+let selectedNode: Node<Element> // program
+let app = App.Uninitialized // program
+let mod = Mods.Command // program
 
-var SpeechRecognition: any = SpeechRecognition || window['webkitSpeechRecognition'];
+let recognition : RecognitionHandler
 
-var recognition = new SpeechRecognition();
-recognition.continuous = false;
-recognition.lang = language;
-recognition.interimResults = false;
-recognition.maxAlternatives = 1;
-
-let mod = Mods.Command
-
-recognition.onresult = function (event: any) {
-    // The SpeechRecognitionResultList object contains SpeechRecognitionResult objects.
-    // The first [0] returns the SpeechRecognitionResult at the last position.
-    // Each SpeechRecognitionResult object contains SpeechRecognitionAlternative objects that contain individual results.
-    // These also have getters so they can be accessed like arrays.
-    // The second [0] returns the SpeechRecognitionAlternative at position 0.
-    // We then return the transcript property of the SpeechRecognitionAlternative object
-    let resultsArray = event.results[event.results.length - 1][0].transcript.split(" ")
-    let lastResult = resultsArray[resultsArray.length - 1].toLowerCase()
-    let c = commands[language]
-    console.log("Last word: " + lastResult);
-
-    if (mod === Mods.Search && lastResult) {
-        console.log("arama yapıldı");
-        if (!selectNearestInput(lastResult)) {
-            lastResult += " bulunamadı"
-        }
-        mod = Mods.Command
-    }
-    else if (mod === Mods.Input && selectedNode) {
-        (selectedNode.element as HTMLInputElement).value = lastResult
-        console.log("inputted: " + lastResult);
-        mod = Mods.Command
-    }
-    else if (c.Next.includes(lastResult)) {
-        moveToNeighborNodeAndFocus(Direction.Next);
-    }
-    else if (c.Prev.includes(lastResult)) {
-        moveToNeighborNodeAndFocus(Direction.Prev);
-    }
-    else if (c.Up.includes(lastResult)) {
-        moveToNeighborNodeAndFocus(Direction.Up);
-    }
-    else if (c.Down.includes(lastResult)) {
-        moveToNeighborNodeAndFocus(Direction.Down);
-    }
-    else if (c.Input.includes(lastResult)) {
-        mod = Mods.Input
-    }
-    else if (c.Search.includes(lastResult)) {
-        mod = Mods.Search
-    }
-    else if (c.Delete.includes(lastResult)) {
-        emptyNodeText(selectedNode);
-    }
-    else if (c.Click.includes(lastResult)) {
-        (selectedNode.element as HTMLInputElement).click()
-        mod = Mods.Command
-    } else {
-        mod = Mods.Command
-        btn.updateButton(mod, lastResult, true)
-        return
-    }
-    btn.updateButton(mod, lastResult)
-}
-
-recognition.onend = function () {
-    if (recording) {
-        setTimeout(function () {
-            try {
-                recognition.start();
-            }
-            catch (e) {
-                console.log(e);
-            }
-        }, 400);
-    }
-}
-
-recognition.onerror = function (event: any) {
-    console.log(event.error);
-}
-
+// tag  : page related
+// input: The web page
+// output: A linked list array
 function initHtmlInputs() {
     const nodes: Element[] = [...document.querySelectorAll(selectors.join())]
     console.log("number of nodes: " + nodes.length);
@@ -137,13 +62,20 @@ function initHtmlInputs() {
             LinkedListArray.push(list)
         }
     }
+    console.log(LinkedListArray);
 }
 
+// tag   : position related
+// input : string,LinkedListArray,
+// output: node
 function selectNearestInput(text: string, _callback?: () => void): boolean {
+    // Search for buttons first
+    // ****** */
     for (const LinkedListItem of LinkedListArray) {
         let temp: Node<Element> | null = LinkedListItem.head
         while (temp) {
-            if ((temp.element as HTMLElement).innerText.toLocaleLowerCase() === text) {
+            let el = (temp.element as HTMLElement)
+            if (el.innerText.toLocaleLowerCase() === text || el.getAttribute("placeholder")?.toLocaleLowerCase() === text) {
                 selectedNode = temp
                 selectedNode.focus()
                 return true
@@ -151,6 +83,7 @@ function selectNearestInput(text: string, _callback?: () => void): boolean {
             temp = temp.next
         }
     }
+    // ****** */
     let result = locateByText(text)
     if (!result) return false
     console.log("Found");
@@ -160,25 +93,27 @@ function selectNearestInput(text: string, _callback?: () => void): boolean {
 
     for (const LinkedListItem of LinkedListArray) {
         if (!LinkedListItem.head || LinkedListItem.head.y < 0) continue
-
+        
         if (Math.abs(labelY - LinkedListItem.head.y) < maxOffset) {
+            // yatay
             selectedNode = LinkedListItem.head
             LinkedListItem.head.focus()
             return true
         } else if (labelY < Math.abs((LinkedListItem.head.y - maxOffset))) {
+            // Dikey 
             let temp: Node<Element> | null = LinkedListItem.head
+            let rawPosition = LinkedListItem.head.y
 
             while (temp) {
-                console.log(labelX + " - " + temp.x + "=" + Math.abs(labelX - temp.x));
                 if (Math.abs(labelX - temp.x) < maxOffset) {
                     selectedNode = temp;
                     temp.focus()
-                    console.log("looking by y:");
                     console.log(selectedNode.element);
 
                     return true
                 }
-                temp = temp.next
+                if(temp.next?.y === rawPosition) temp = temp.next
+                else break
             }
         }
     }
@@ -186,6 +121,9 @@ function selectNearestInput(text: string, _callback?: () => void): boolean {
     return false
 }
 
+// tag   : position related
+// input : currentNode,direction
+// output: node
 function moveToNeighborNodeAndFocus(direction: Direction = Direction.Next, _callback?: () => void) {
     if (selectedNode == null) return
     if (direction === Direction.Next && selectedNode.next)
@@ -210,38 +148,76 @@ function moveToNeighborNodeAndFocus(direction: Direction = Direction.Next, _call
 }
 
 function emptyNodeText(node: Node<Element>) {
-    if (node) {
-        (node.element as HTMLInputElement).value = ""
-    }
-}
-
-function updateLanguage(lang: string) {
-    recognition.lang = lang;
-    recognition.stop();
-
-    setTimeout(function () {
-        try {
-            recognition.start();
-        } catch {
-            console.log("hata");
-        }
-    }, 400);
-    btn.updateLanguage(recognition.lang === "tr_TR" ? "tr" : "en")
+    if (node) (node.element as HTMLInputElement).value = ""
 }
 
 function initApp(){
     app = App.On
+    //recognition = new BrowserRecognition(language)
+    recognition   = new AzureRecognition(language)
+    btn = hoveringButton()
+    let x = 1
     initHtmlInputs()
-    console.log(LinkedListArray);
     recognition.start();
-    recording = true
-    btn = hoveringButton(recognition)
+    recognition.onResult$.subscribe(
+        {
+            next(text){
+                x++;
+                console.log(x);
+                console.log("Last word: " + text);
+                if (mod === Mods.Search && text) {
+                    console.log("arama yapıldı");
+                    if (!selectNearestInput(text)) {
+                        text += " bulunamadı"
+                    }
+                    mod = Mods.Command
+                }
+                else if (mod === Mods.Input && selectedNode) {
+                    (selectedNode.element as HTMLInputElement).value = text
+                    console.log("inputted: " + text);
+                    mod = Mods.Command
+                }
+                else if (commands[language].Next.includes(text)) {
+                    moveToNeighborNodeAndFocus(Direction.Next);
+                }
+                else if (commands[language].Prev.includes(text)) {
+                    moveToNeighborNodeAndFocus(Direction.Prev);
+                }
+                else if (commands[language].Up.includes(text)) {
+                    moveToNeighborNodeAndFocus(Direction.Up);
+                }
+                else if (commands[language].Down.includes(text)) {
+                    moveToNeighborNodeAndFocus(Direction.Down);
+                }
+                else if (commands[language].Input.includes(text)) {
+                    mod = Mods.Input
+                }
+                else if (commands[language].Search.includes(text)) {
+                    mod = Mods.Search
+                }
+                else if (commands[language].Delete.includes(text)) {
+                    emptyNodeText(selectedNode);
+                }
+                else if (commands[language].Click.includes(text)) {
+                    (selectedNode.element as HTMLInputElement).click()
+                    mod = Mods.Command
+                } else {
+                    mod = Mods.Command
+                    btn.updateButton(mod, text, true)
+                    return
+                }
+                btn.updateButton(mod, text)
+            }
+        })
+    
     btn.langClicked$.subscribe(
         () => {
-            language = recognition.lang === "tr_TR" ? "en_US" : "tr_TR"
-            updateLanguage(language)
+            language = language === "tr_TR" ? "en_US" : "tr_TR"
+            recognition.updateLanguage(language)
+            btn.updateLanguage(language === "tr_TR" ? "tr" : "en")
         }
     )
+
     btn.retryClicked$.subscribe(
         () => {
             selectedNode.focus()
@@ -250,7 +226,8 @@ function initApp(){
             btn.updateButton(Mods.Input, "...")
         }
     )
-    btn.updateButton(Mods.Command, "Komut bekleniyor..")
+
+    btn.updateButton(Mods.Command, "Komut bekleniliyor..")
 }
 
 function toggleApp() {
@@ -259,13 +236,11 @@ function toggleApp() {
     }
     else if (app === App.On) {
         app = App.Off
-        recording = false
-        recognition.abort();
+        recognition.stop();
         btn.toggleVisibility()
     }
     else if (app === App.Off) {
         app = App.On
-        recording = true
         try {
             recognition.start()
         } catch {

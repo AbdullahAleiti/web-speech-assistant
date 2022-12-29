@@ -5,6 +5,7 @@
     top: 30px;
     left: 30px;
     z-index: 9999999;
+    width: max-content;
 }
 
 #abdullahaleiti_smart-voice-assistant>div {
@@ -28,6 +29,11 @@
     height: 100%;
     padding: 0 !important;
     position: absolute;
+    cursor: move;
+}
+
+.move {
+    cursor: move;
 }
 
 .prevent-select {

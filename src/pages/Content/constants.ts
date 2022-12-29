@@ -28,27 +28,6 @@ export const commands = {
     }
 }
 
-export const getOffsetRect = (el: Element) => {
-    let rect = el.getBoundingClientRect();
-
-    // add window scroll position to get the offset position
-    let left = rect.left + window.scrollX;
-    let top = rect.top + window.scrollY;
-    let right = rect.right + window.scrollX;
-    let bottom = rect.bottom + window.scrollY;
-
-    // polyfill missing 'x' and 'y' rect properties not returned
-    // from getBoundingClientRect() by older browsers
-    let x = rect.x === undefined ? left : rect.x + window.scrollX;
-    let y = rect.y === undefined ? top : rect.y + window.scrollY;
-
-    // width and height are the same
-    let width = rect.width;
-    let height = rect.height;
-
-    return { left, top, right, bottom, x, y, width, height };
-};
-
 export enum Direction {
     Next,
     Prev,

@@ -6,6 +6,7 @@ var webpack = require('webpack'),
   HtmlWebpackPlugin = require('html-webpack-plugin'),
   TerserPlugin = require('terser-webpack-plugin');
 var { CleanWebpackPlugin } = require('clean-webpack-plugin');
+const Dotenv = require('dotenv-webpack');
 
 const ASSET_PATH = process.env.ASSET_PATH || '/';
 
@@ -176,6 +177,7 @@ var options = {
       chunks: ['panel'],
       cache: false,
     }),
+    new Dotenv()
   ],
   infrastructureLogging: {
     level: 'info',

@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "smart-voice-assistant",
+  "name": "web-speech-assistant",
   "description": "Web at your voice's disposal.",
   "options_page": "options.html",
   "background": {

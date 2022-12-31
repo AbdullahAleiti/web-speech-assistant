@@ -1,8 +1,13 @@
 import {describe, test, expect } from 'vitest';
+import fetch from 'node-fetch';
 
-describe("Example File", () => {
-    test("Sample test", () => {
-        document.body.innerHTML = "<h1>hello world</h1>"
-        expect(window.innerHeight).equal(4);
-    });
+describe("is test file loaded correctly", () => {
+    test("html loaded" ,()=>{
+        return fetch("http://localhost:5500/index.html").then(response => response.text())
+        .then((html) => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html,"text/html")
+            expect(doc.getElementById("name")?.innerHTML).toBe("Abdullah");
+        });
+    })
 });

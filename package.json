@@ -1,6 +1,6 @@
 {
-  "name": "smart-voice-assistant",
-  "version": "0.1.0",
+  "name": "web-speech-assistant",
+  "version": "0.6.0",
   "license": "MIT",
   "scripts": {
     "build": "node utils/build.js",
@@ -11,17 +11,18 @@
   },
   "dependencies": {
     "@hot-loader/react-dom": "^17.0.2",
+    "@types/jsdom": "^20.0.1",
     "axios": "^1.2.1",
-    "baconjs": "^3.0.17",
     "dotenv": "^16.0.3",
+    "happy-dom": "^8.1.1",
     "microsoft-cognitiveservices-speech-sdk": "^1.24.1",
+    "node-fetch": "^3.3.0",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "react-draggable": "^4.4.5",
     "react-hot-loader": "^4.13.0",
     "react-portal": "^4.2.2",
-    "rxjs": "^7.6.0",
-    "universal-cookie": "^4.0.4"
+    "rxjs": "^7.6.0"
   },
   "devDependencies": {
     "@babel/core": "^7.17.0",

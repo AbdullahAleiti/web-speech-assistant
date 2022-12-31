@@ -13,20 +13,24 @@ export default class AzureRecognition implements RecognitionHandler {
     recognitionObject: any;
     onResult$ : Subject<string>
     onEnd$    : Observable<Event>
-    recording: boolean;
-    language : string;
+    recording : boolean;
+    language  : string;
+    key       : string;
+    region    : string;
 
-    constructor(language: string){
+    constructor(language: string,key:string,region:string){
         this.language = language
         this.onResult$  = new Subject()
         this.onEnd$     = fromEvent(document.body,"click")
-        this.recording = false;
+        this.recording = false
+        this.key = key
+        this.region = region
         this.configureAudio(language)
     }
     
     configureAudio(language : string)
     {
-        const speechConfig = speechsdk.SpeechConfig.fromSubscription(process.env.SPEECH_KEY, process.env.SPEECH_REGION);
+        const speechConfig = speechsdk.SpeechConfig.fromSubscription(this.key, this.region);
         speechConfig.speechRecognitionLanguage = language.replace("_","-");
         // disable punctuation
         speechConfig.setServiceProperty('punctuation', 'explicit', speechsdk.ServicePropertyChannel.UriQueryParameter)

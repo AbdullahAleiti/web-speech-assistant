@@ -8,21 +8,18 @@ import BrowserRecognition from "./modules/BrowserRecognition";
 import { RecognitionHandler } from "./modules/RecognitionHandler";
 import AzureRecognition from "./modules/AzureRecognition";
 
-let language = "tr_TR" // recognition parametere 
-const maxOffset = 20 //program config
-let LinkedListArray: LinkedList<Element>[] = [] //program
-const selectors = ["input", "textarea", "button"] //program
-let btn: any //program
-let selectedNode: Node<Element> // program
-let app = App.Uninitialized // program
-let mod = Mods.Command // program
+let language = "tr_TR"
+const maxOffset = 20
+let LinkedListArray: LinkedList<Element>[] = []
+const selectors = ["input", "textarea", "button"]
+let btn: any
+let selectedNode: Node<Element>
+let app = App.Uninitialized
+let mod = Mods.Command
 
 let recognition : RecognitionHandler
 
-// tag  : page related
-// input: The web page
-// output: A linked list array
-function initHtmlInputs() {
+function initHtmlInputs(_callback?:()=>void) {
     const nodes: Element[] = [...document.querySelectorAll(selectors.join())]
     console.log("number of nodes: " + nodes.length);
     for (let i = 0; i < nodes.length; i++) {
@@ -63,11 +60,9 @@ function initHtmlInputs() {
         }
     }
     console.log(LinkedListArray);
+    if (_callback) _callback()
 }
 
-// tag   : position related
-// input : string,LinkedListArray,
-// output: node
 function selectNearestInput(text: string, _callback?: () => void): boolean {
     // Search for buttons first
     // ****** */
@@ -95,12 +90,17 @@ function selectNearestInput(text: string, _callback?: () => void): boolean {
         if (!LinkedListItem.head || LinkedListItem.head.y < 0) continue
         
         if (Math.abs(labelY - LinkedListItem.head.y) < maxOffset) {
-            // yatay
-            selectedNode = LinkedListItem.head
-            LinkedListItem.head.focus()
-            return true
+            let temp: Node<Element> | null = LinkedListItem.head
+            while (temp) {
+                if (labelX > temp.x) {
+                    temp = temp.next
+                    continue
+                }
+                selectedNode = temp
+                selectedNode.focus()
+                return true
+            }
         } else if (labelY < Math.abs((LinkedListItem.head.y - maxOffset))) {
-            // Dikey 
             let temp: Node<Element> | null = LinkedListItem.head
             let rawPosition = LinkedListItem.head.y
 
@@ -121,9 +121,6 @@ function selectNearestInput(text: string, _callback?: () => void): boolean {
     return false
 }
 
-// tag   : position related
-// input : currentNode,direction
-// output: node
 function moveToNeighborNodeAndFocus(direction: Direction = Direction.Next, _callback?: () => void) {
     if (selectedNode == null) return
     if (direction === Direction.Next && selectedNode.next)
@@ -151,30 +148,31 @@ function emptyNodeText(node: Node<Element>) {
     if (node) (node.element as HTMLInputElement).value = ""
 }
 
-function initApp(){
+async function setupRecognitionService(){
+    await chrome.storage.local.get(["azure_recognition"]).then((storage) => {
+        if (storage["azure_recognition"] && storage["azure_recognition"].key && storage["azure_recognition"].region)
+            recognition = new AzureRecognition(language,storage["azure_recognition"].key,storage["azure_recognition"].region)
+        else
+            recognition = new BrowserRecognition(language)
+    })
+}
+
+async function initApp(){
     app = App.On
-    //recognition = new BrowserRecognition(language)
-    recognition   = new AzureRecognition(language)
+    await setupRecognitionService()
     btn = hoveringButton()
-    let x = 1
     initHtmlInputs()
     recognition.start();
     recognition.onResult$.subscribe(
         {
             next(text){
-                x++;
-                console.log(x);
                 console.log("Last word: " + text);
                 if (mod === Mods.Search && text) {
-                    console.log("arama yapıldı");
-                    if (!selectNearestInput(text)) {
-                        text += " bulunamadı"
-                    }
+                    if (!selectNearestInput(text)) text += " bulunamadı"
                     mod = Mods.Command
                 }
                 else if (mod === Mods.Input && selectedNode) {
                     (selectedNode.element as HTMLInputElement).value = text
-                    console.log("inputted: " + text);
                     mod = Mods.Command
                 }
                 else if (commands[language].Next.includes(text)) {

@@ -38,6 +38,7 @@ export default class BrowserRecognition implements RecognitionHandler {
             // The second [0] returns the SpeechRecognitionAlternative at position 0.
             // We then return the transcript property of the SpeechRecognitionAlternative object
             let resultsArray : string = event.results[event.results.length - 1][0].transcript.split(" ")
+            
             this.onResult$.next(resultsArray[resultsArray.length - 1].toLowerCase())
         }
 
